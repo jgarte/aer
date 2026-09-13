@@ -2,7 +2,8 @@
 
 One public Supabase Edge Function returning the latest published official USD
 exchange rate from the [Bank of Albania](https://www.bankofalbania.org/Markets/Official_exchange_rate/).
-No database, authentication, or persistent cache is used.
+No database is used for rate data. The latest valid rate is persisted in a
+private Supabase Storage bucket.
 
 ## Deploy
 
@@ -16,6 +17,23 @@ supabase functions deploy usd-all --project-ref YOUR_PROJECT_REF
 
 `supabase/config.toml` sets `verify_jwt = false`, so callers need no API key or
 Authorization header. See [Supabase function configuration](https://supabase.com/docs/guides/functions/function-configuration).
+
+The function uses a private Supabase Storage bucket named `rate-cache`. Apply
+the bucket migration before deploying a fresh project:
+
+```sh
+supabase db push --project-ref YOUR_PROJECT_REF
+supabase functions deploy usd-all --project-ref YOUR_PROJECT_REF
+```
+
+Run the isolated handler tests with:
+
+```sh
+deno test supabase/functions/usd-all/handler_test.ts
+```
+
+The tests use mocked source and Storage dependencies, so they do not modify
+the deployed function or production cache.
 
 To scaffold an equivalent project from an empty directory, use the commands below,
 then replace the generated function with `supabase/functions/usd-all/index.ts`
@@ -36,7 +54,7 @@ curl -i 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/usd-all'
 Example response (the rate changes with the source):
 
 ```json
-{"base":"USD","quote":"ALL","rate":79.29,"source":"Bank of Albania"}
+{"base":"USD","quote":"ALL","rate":79.29,"source":"Bank of Albania","fetchedAt":"2026-09-13T19:41:08.334Z"}
 ```
 
 ## Parsing and responses
@@ -50,6 +68,12 @@ If the website changes its structure, the selector may need updating.
 
 The value is already ALL per USD, so no inversion or conversion is performed.
 "Current" means the latest published official rate, including on weekends.
+
+The function reads `rate-cache/usd-all/latest.json` before calling the source.
+Snapshots less than one hour old are returned directly. After one hour, the
+function fetches a fresh rate and overwrites the snapshot. If the source or
+parser fails, the latest valid snapshot is returned with `stale: true`; if no
+snapshot exists, the function returns 502.
 
 Upstream HTTP/network failures, a 10-second fetch timeout, and unreadable response
 bodies return 502. Missing or invalid rate data also returns 502. Unexpected

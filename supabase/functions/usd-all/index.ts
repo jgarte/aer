@@ -1,66 +1,92 @@
-import { load } from "npm:cheerio@1.0.0/slim";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  createUsdAllHandler,
+  isRateSnapshot,
+  type RateCache,
+  type RateSnapshot,
+} from "./handler.ts";
 
-const SOURCE_URL =
-  "https://www.bankofalbania.org/Markets/Official_exchange_rate/";
+const CACHE_BUCKET = "rate-cache";
+const CACHE_PATH = "usd-all/latest.json";
 
-type UsdAllResponse =
-  | {
-      base: "USD";
-      quote: "ALL";
-      rate: number;
-      source: "Bank of Albania";
+function createStorageClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  let secretKey: string | undefined;
+
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys) as Record<string, unknown>;
+      if (typeof parsed.default === "string") {
+        secretKey = parsed.default;
+      }
+    } catch {
+      console.error("Could not parse SUPABASE_SECRET_KEYS");
     }
-  | {
-      error: string;
-    };
+  }
 
-function json(body: UsdAllResponse, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": status === 200 ? "public, max-age=3600" : "no-store",
+  secretKey ??= Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? undefined;
+
+  if (!url || !secretKey) {
+    console.error("Supabase Storage is not configured");
+    return null;
+  }
+
+  return createClient(url, secretKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
     },
   });
 }
 
-Deno.serve(async () => {
-  try {
-    let html: string;
-    try {
-      const response = await fetch(SOURCE_URL, {
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!response.ok) {
-        return json({ error: "Bank of Albania request failed" }, 502);
+function createStorageCache(): RateCache {
+  const storage = createStorageClient();
+
+  return {
+    async read(): Promise<RateSnapshot | null> {
+      if (!storage) return null;
+
+      try {
+        const { data, error } = await storage.storage
+          .from(CACHE_BUCKET)
+          .download(CACHE_PATH);
+
+        if (error || !data) return null;
+
+        const value: unknown = JSON.parse(await data.text());
+        return isRateSnapshot(value) ? value : null;
+      } catch (error) {
+        console.error("Could not read cached USD rate", error);
+        return null;
       }
-      html = await response.text();
-    } catch {
-      return json({ error: "Bank of Albania request failed" }, 502);
-    }
+    },
 
-    const $ = load(html);
-    // Only the official-rate table has the "Main Currency" header.
-    const table = $("table").filter((_, element) =>
-      $(element).find("thead th").first().text().trim() === "Main Currency"
-    );
-    const row = table.find("tr").filter((_, element) =>
-      $(element).children("td").eq(1).text().trim() === "USD"
-    );
-    // Live columns: currency name, code, official rate, change, arrow.
-    const cells = row.children("td");
-    const value = cells.eq(2).text().trim();
-    const rate = /^\d+(?:\.\d+)?$/.test(value) ? Number(value) : NaN;
+    async write(snapshot: RateSnapshot): Promise<void> {
+      if (!storage) return;
 
-    if (
-      table.length !== 1 || row.length !== 1 || cells.length !== 5 ||
-      !Number.isFinite(rate) || rate <= 0
-    ) {
-      return json({ error: "Could not parse the official USD rate" }, 502);
-    }
+      try {
+        const { error } = await storage.storage
+          .from(CACHE_BUCKET)
+          .upload(CACHE_PATH, JSON.stringify(snapshot), {
+            contentType: "application/json",
+            cacheControl: "0",
+            upsert: true,
+          });
 
-    return json({ base: "USD", quote: "ALL", rate, source: "Bank of Albania" });
-  } catch {
-    return json({ error: "Internal server error" }, 500);
-  }
+        if (error) {
+          console.error("Could not write cached USD rate", error);
+        }
+      } catch (error) {
+        console.error("Could not write cached USD rate", error);
+      }
+    },
+  };
+}
+
+const handler = createUsdAllHandler({
+  fetchFn: (input, init) => fetch(input, init),
+  cache: createStorageCache(),
 });
+
+Deno.serve(handler);
