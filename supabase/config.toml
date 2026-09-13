@@ -1,0 +1,4 @@
+project_id = "aer"
+
+[functions.usd-all]
+verify_jwt = false
