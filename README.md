@@ -54,7 +54,7 @@ curl -i 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/usd-all'
 Example response (the rate changes with the source):
 
 ```json
-{"base":"USD","quote":"ALL","rate":79.29,"source":"Bank of Albania","fetchedAt":"2026-09-13T19:41:08.334Z"}
+{"baseCurrency":"USD","quoteCurrency":"ALL","quotePerBase":79.29,"source":"Bank of Albania","retrievedAt":"2026-09-13T19:41:08.334Z"}
 ```
 
 ## Parsing and responses

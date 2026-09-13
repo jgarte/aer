@@ -6,11 +6,11 @@ import {
 } from "./handler.ts";
 
 const snapshot: RateSnapshot = {
-  base: "USD",
-  quote: "ALL",
-  rate: 79.29,
+  baseCurrency: "USD",
+  quoteCurrency: "ALL",
+  quotePerBase: 79.29,
   source: "Bank of Albania",
-  fetchedAt: "2026-09-13T18:00:00.000Z",
+  retrievedAt: "2026-09-13T18:00:00.000Z",
 };
 
 const sourceHtml = `
@@ -71,8 +71,8 @@ Deno.test("refreshes an expired snapshot and writes the new rate", async () => {
   const body = await response.json();
 
   strictEqual(response.status, 200);
-  strictEqual(body.rate, 79.31);
-  strictEqual(body.fetchedAt, now.toISOString());
+  strictEqual(body.quotePerBase, 79.31);
+  strictEqual(body.retrievedAt, now.toISOString());
   deepStrictEqual(written, body);
 });
 
@@ -133,6 +133,6 @@ Deno.test("returns the live rate when writing the cache fails", async () => {
   const body = await response.json();
 
   strictEqual(response.status, 200);
-  strictEqual(body.rate, 79.31);
-  strictEqual(body.fetchedAt, now.toISOString());
+  strictEqual(body.quotePerBase, 79.31);
+  strictEqual(body.retrievedAt, now.toISOString());
 });

@@ -5,14 +5,14 @@ const SOURCE_URL =
 const CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 
 export type UsdAllRate = {
-  base: "USD";
-  quote: "ALL";
-  rate: number;
+  baseCurrency: "USD";
+  quoteCurrency: "ALL";
+  quotePerBase: number;
   source: "Bank of Albania";
 };
 
 export type RateSnapshot = UsdAllRate & {
-  fetchedAt: string;
+  retrievedAt: string;
 };
 
 export type UsdAllResponse =
@@ -46,18 +46,18 @@ export function isRateSnapshot(value: unknown): value is RateSnapshot {
   if (!value || typeof value !== "object") return false;
 
   const snapshot = value as Partial<RateSnapshot>;
-  return snapshot.base === "USD" &&
-    snapshot.quote === "ALL" &&
-    typeof snapshot.rate === "number" &&
-    Number.isFinite(snapshot.rate) &&
-    snapshot.rate > 0 &&
+  return snapshot.baseCurrency === "USD" &&
+    snapshot.quoteCurrency === "ALL" &&
+    typeof snapshot.quotePerBase === "number" &&
+    Number.isFinite(snapshot.quotePerBase) &&
+    snapshot.quotePerBase > 0 &&
     snapshot.source === "Bank of Albania" &&
-    typeof snapshot.fetchedAt === "string" &&
-    Number.isFinite(Date.parse(snapshot.fetchedAt));
+    typeof snapshot.retrievedAt === "string" &&
+    Number.isFinite(Date.parse(snapshot.retrievedAt));
 }
 
 function isFresh(snapshot: RateSnapshot, now: Date): boolean {
-  return now.getTime() - Date.parse(snapshot.fetchedAt) < CACHE_MAX_AGE_MS;
+  return now.getTime() - Date.parse(snapshot.retrievedAt) < CACHE_MAX_AGE_MS;
 }
 
 export function createUsdAllHandler({
@@ -100,21 +100,23 @@ export function createUsdAllHandler({
       // Live columns: currency name, code, official rate, change, arrow.
       const cells = row.children("td");
       const value = cells.eq(2).text().trim();
-      const rate = /^\d+(?:\.\d+)?$/.test(value) ? Number(value) : NaN;
+      const quotePerBase = /^\d+(?:\.\d+)?$/.test(value)
+        ? Number(value)
+        : NaN;
 
       if (
         table.length !== 1 || row.length !== 1 || cells.length !== 5 ||
-        !Number.isFinite(rate) || rate <= 0
+        !Number.isFinite(quotePerBase) || quotePerBase <= 0
       ) {
         return cachedOrError("Could not parse the official USD rate");
       }
 
       const snapshot: RateSnapshot = {
-        base: "USD",
-        quote: "ALL",
-        rate,
+        baseCurrency: "USD",
+        quoteCurrency: "ALL",
+        quotePerBase,
         source: "Bank of Albania",
-        fetchedAt: now().toISOString(),
+        retrievedAt: now().toISOString(),
       };
 
       try {
