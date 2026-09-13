@@ -15,6 +15,22 @@ supabase login
 supabase functions deploy usd-all --project-ref YOUR_PROJECT_REF
 ```
 
+To load the project reference automatically with direnv, copy the example file,
+set the value in the local `.envrc`, and approve it:
+
+```sh
+cp .envrc.example .envrc
+$EDITOR .envrc
+direnv allow
+```
+
+After that, use the just targets without passing the project reference:
+
+```sh
+just deploy
+just verify
+```
+
 `supabase/config.toml` sets `verify_jwt = false`, so callers need no API key or
 Authorization header. See [Supabase function configuration](https://supabase.com/docs/guides/functions/function-configuration).
 
