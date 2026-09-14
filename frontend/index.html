@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="The latest official US dollar to Albanian lek exchange rate."
+    />
+    <title>USD to ALL</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Albanian exchange rate</p>
+        <h1 id="page-title">USD to ALL</h1>
+        <p class="lede">The latest published official rate from the Bank of Albania.</p>
+      </section>
+
+      <section class="rate-card" aria-live="polite">
+        <div class="rate-label">1 US dollar</div>
+        <div class="rate-value" id="rate-value">Loading...</div>
+        <div class="rate-meta" id="rate-meta">Fetching the latest rate</div>
+        <p class="error" id="error" role="alert" hidden></p>
+        <button id="refresh" type="button">Refresh rate</button>
+      </section>
+
+      <footer>
+        <span id="source">Source: Bank of Albania</span>
+        <span id="retrieved"></span>
+      </footer>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

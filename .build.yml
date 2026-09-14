@@ -1,0 +1,13 @@
+image: alpine/edge
+packages:
+- hut
+environment:
+  site: al.whereis.social
+oauth: pages.sr.ht/PAGES:RW
+sources:
+- https://git.sr.ht/~jgart/aer
+tasks:
+- publish: |
+    cd aer
+    tar -C frontend -czf ../site.tar.gz .
+    hut pages publish ../site.tar.gz --domain "$site"

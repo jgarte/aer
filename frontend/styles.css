@@ -1,0 +1,126 @@
+:root {
+  color-scheme: light;
+  --ink: #17211b;
+  --muted: #66736b;
+  --paper: #f5f3ed;
+  --card: #fffdf8;
+  --accent: #1f7a5a;
+  --accent-dark: #15563f;
+  --line: #dfe5dc;
+  --shadow: 0 24px 70px rgba(32, 53, 42, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top right, #d8eee1 0, transparent 34rem),
+    var(--paper);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.shell {
+  width: min(100% - 2rem, 48rem);
+  margin: 0 auto;
+  padding: 14vh 0 2rem;
+}
+
+.intro {
+  max-width: 32rem;
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--accent-dark);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(3rem, 12vw, 6.5rem);
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+}
+
+.lede {
+  margin: 1.25rem 0 0;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+.rate-card {
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.rate-label,
+.rate-meta,
+footer {
+  color: var(--muted);
+}
+
+.rate-label {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.rate-value {
+  margin: 0.5rem 0;
+  font-size: clamp(2.75rem, 11vw, 6rem);
+  font-weight: 800;
+  letter-spacing: -0.07em;
+  line-height: 1;
+}
+
+.rate-meta {
+  min-height: 1.5rem;
+  font-size: 0.95rem;
+}
+
+button {
+  margin-top: 1.75rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+button:hover {
+  background: var(--accent-dark);
+}
+
+button:focus-visible {
+  outline: 3px solid #9bd4b8;
+  outline-offset: 3px;
+}
+
+.error {
+  margin: 1rem 0 0;
+  color: #a43f35;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+  padding: 1rem 0.25rem;
+  font-size: 0.8rem;
+}
